@@ -1,0 +1,6 @@
+cradle:
+  cabal:
+    - path: "app"
+      component: "exe:zstd-hs"
+    - path: "lib"
+      component: "lib:zstd-internal"
