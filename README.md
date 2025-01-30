@@ -1,2 +1,3 @@
 # duckdb-hs
-# duckdb-hs
+
+Duckdb bindings for haskell
