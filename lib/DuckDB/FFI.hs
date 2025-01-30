@@ -95,7 +95,7 @@ foreign import ccall "duckdb.h duckdb_column_count"
   c_duckdb_column_count :: Ptr DuckDBResult -> CInt
 
 foreign import ccall "duckdb.h duckdb_result_error"
-  c_duckdb_result_error :: Ptr DuckDBResult -> CString
+  c_duckdb_result_error :: Ptr DuckDBResult -> IO CString
 
 foreign import ccall "duckdb.h duckdb_destroy_result"
   c_duckdb_destroy_result :: Ptr DuckDBResult -> IO ()

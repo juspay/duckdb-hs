@@ -95,7 +95,8 @@ duckdbQuery DuckDbCon{connection} query = do
     con <- peek connection
     result <- c_duckdb_query con cquery resPtr
     when (not (result == 0)) (do
-        errorString <- peekCString $ c_duckdb_result_error resPtr
+        err <- c_duckdb_result_error resPtr
+        errorString <- peekCString err
         c_duckdb_destroy_result resPtr
         error errorString)
     c_duckdb_destroy_result resPtr
@@ -103,6 +104,7 @@ duckdbQuery DuckDbCon{connection} query = do
 getRowData :: Ptr CDuckDBDataChunk -> [DuckDBType] -> Int -> [String] -> ConduitT () Object IO ()
 getRowData chunk types numCols cNames = do
   let numRows = fromEnum $ c_duckdb_data_chunk_get_size chunk
+  liftIO $ print numRows
   columnsData <- mapM (\idxCol -> do
     let 
       vector = c_duckdb_data_chunk_get_vector chunk (toEnum idxCol)
@@ -130,7 +132,8 @@ makeResultConduit resultPtr = do
       chunkPtr <- liftIO $ c_duckdb_stream_fetch_chunk_ptr resultPtr
       when (not (chunkPtr == nullPtr)) (do
           getRowData chunkPtr types numCols cNames
-          liftIO $ c_duckdb_destroy_data_chunk chunkPtr
+          -- liftIO $ c_duckdb_destroy_data_chunk chunkPtr
+          liftIO  $ print "conduit finish"
           loopFetch cNames
         )
   colNames <- liftIO $ mapM (\idx -> peekCString $ c_duckdb_column_name resultPtr (toEnum idx)) [0..numCols-1]
@@ -146,10 +149,17 @@ duckdbQueryWithResponse DuckDbCon{connection} query = do
   ps <- liftIO $ peek psPtr
   result <- liftIO $
               c_duckdb_execute_prepared_streaming ps resPtr
+  liftIO  $ print result
   when (not (result == 0)) (do
-        errorString <- liftIO $ peekCString $ c_duckdb_result_error resPtr
-        liftIO $ c_duckdb_destroy_result resPtr
-        error errorString)
+        liftIO $ print "In error"
+        err <- liftIO $ c_duckdb_result_error resPtr
+        errorString <- liftIO $
+                        case err == nullPtr of
+                          False -> peekCString err
+                          _ -> pure "Failed"
+        error errorString
+        )
+  liftIO $ print "out error"
   makeResultConduit resPtr
   liftIO $ c_duckdb_destroy_result resPtr
 
