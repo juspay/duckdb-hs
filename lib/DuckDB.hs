@@ -3,7 +3,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module DuckDB 
+module DuckDB (duckdbOpen, duckdbConfigureAWS, duckdbQueryWithResponse, duckdbQuery, duckdbClose)
 where
 
 import Foreign
@@ -25,8 +25,7 @@ import Foreign.Marshal.Alloc
 import Foreign.Ptr
 import Foreign.C.String
 import Foreign.Storable
-import Data.ByteString.Internal as BS
-    ( mallocByteString, ByteString(PS) )
+import Data.ByteString.Internal as BS ( mallocByteString, ByteString(PS) )
 import DuckDB.FFI
 import qualified Data.ByteString as B
 import Control.Exception
@@ -44,16 +43,16 @@ import Control.Monad
 import DuckDB.Types
 import DuckDB.Utils
 
-duckdbOpen :: Maybe String -> IO (Ptr DuckDBDatabase)
-duckdbOpen mPath = do
+duckdbOpenInternal :: Maybe String -> IO (Ptr DuckDBDatabase)
+duckdbOpenInternal mPath = do
   outDatabase <- malloc
   cPath <- maybe (pure nullPtr) newCString mPath
   result <- c_duckdb_open cPath outDatabase
   when (not (result == 0)) (error "Failed to open DuckDB database.")
   pure outDatabase
 
-duckdbOpenExt :: Maybe String -> DuckDBConfig -> IO (Ptr DuckDBDatabase)
-duckdbOpenExt mPath config = do
+duckdbOpenExtInternal :: Maybe String -> DuckDBConfig -> IO (Ptr DuckDBDatabase)
+duckdbOpenExtInternal mPath config = do
   outDatabase <- malloc
   cPath <- maybe (pure nullPtr) newCString mPath
   result <- c_duckdb_open_ext cPath outDatabase config nullPtr
@@ -67,26 +66,26 @@ getConfigFromHM items = do
   traverse (\(key,value) -> duckdbSetConfig configPtr key value) items
   pure config
 
-duckdbConnect :: Ptr LDuckDBDatabase -> IO (Ptr DuckDBConnection)
-duckdbConnect dataBase = do
+duckdbConnectInternal :: Ptr CDuckDBDatabase -> IO (Ptr DuckDBConnection)
+duckdbConnectInternal dataBase = do
   outConnection <- malloc
   result <- c_duckdb_connect dataBase outConnection
   when (not (result == 0)) (error "Failed to Connect to DuckDB database.")
   pure outConnection
 
-duckdbOpenAndConnect :: (Traversable t) => Maybe String -> Maybe (t (String, String)) -> IO DuckDbCon
-duckdbOpenAndConnect mPath mConfigItems = do
+duckdbOpen :: (Traversable t) => Maybe String -> Maybe (t (String, String)) -> IO DuckDbCon
+duckdbOpen mPath mConfigItems = do
   (ptr, config) <- case mConfigItems of
           Just items -> do 
             config <-  getConfigFromHM items
             configPtr <- peek config
-            dbptr <- duckdbOpenExt mPath configPtr
+            dbptr <- duckdbOpenExtInternal mPath configPtr
             pure (dbptr, Just config)
           Nothing -> do
-            dbptr <- duckdbOpen mPath
+            dbptr <- duckdbOpenInternal mPath
             pure (dbptr, Nothing)
   db <- peek ptr
-  con <-  duckdbConnect db
+  con <-  duckdbConnectInternal db
   pure $ DuckDbCon con ptr config
 
 duckdbQuery :: DuckDbCon -> String -> IO ()
@@ -101,7 +100,7 @@ duckdbQuery DuckDbCon{connection} query = do
         error errorString)
     c_duckdb_destroy_result resPtr
 
-getRowData :: Ptr LDuckDBDataChunk -> [DuckDBType] -> Int -> [String] -> ConduitT () Object IO ()
+getRowData :: Ptr CDuckDBDataChunk -> [DuckDBType] -> Int -> [String] -> ConduitT () Object IO ()
 getRowData chunk types numCols cNames = do
   let numRows = fromEnum $ c_duckdb_data_chunk_get_size chunk
   columnsData <- mapM (\idxCol -> do
@@ -157,8 +156,8 @@ duckdbQueryWithResponse DuckDbCon{connection} query = do
 duckdbRowCount :: Ptr DuckDBResult -> Int
 duckdbRowCount resultPtr = fromEnum $ c_duckdb_row_count resultPtr
 
-duckdbDisconnectAndClose :: DuckDbCon ->  IO ()
-duckdbDisconnectAndClose DuckDbCon{connection, database, config} = do
+duckdbClose :: DuckDbCon ->  IO ()
+duckdbClose DuckDbCon{connection, database, config} = do
   maybe (pure ()) duckdbDestroyConfig config
   c_duckdb_disconnect connection
   c_duckdb_close database

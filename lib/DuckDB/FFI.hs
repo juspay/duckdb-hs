@@ -11,21 +11,21 @@ import GHC.IO.Exception
 import GHC.Ptr ( Ptr(Ptr) )
 import GHC.CString (unpackCString#)
 
-data LResult
-data LDuckDBDatabase
-data LDuckDBConnection
-data LDuckDBConfig
-data LDuckDBDataChunk
-data LDuckDBVector
-data LDuckDBValidity
+data CResult
+data CDuckDBDatabase
+data CDuckDBConnection
+data CDuckDBConfig
+data CDuckDBDataChunk
+data CDuckDBVector
+data CDuckDBValidity
 
 --  Define types for duckdb_state, duckdb_database, and duckdb_config
 type DuckDBState = CInt
-type DuckDBDatabase = Ptr LDuckDBDatabase
-type DuckDBConnection = Ptr LDuckDBConnection
-type DuckDBResult = Ptr LResult
+type DuckDBDatabase = Ptr CDuckDBDatabase
+type DuckDBConnection = Ptr CDuckDBConnection
+type DuckDBResult = Ptr CResult
 type DuckDBPreparedStatement = Ptr ()
-type DuckDBConfig = Ptr LDuckDBConfig
+type DuckDBConfig = Ptr CDuckDBConfig
 
 -- Foreign imports for the DuckDB API
 foreign import ccall "duckdb.h duckdb_open"
@@ -43,26 +43,26 @@ foreign import ccall "duckdb.h duckdb_query"
   c_duckdb_query :: DuckDBConnection -> CString -> Ptr DuckDBResult -> IO DuckDBState
 
 foreign import ccall "duckdb.h duckdb_fetch_chunk"
-  c_duckdb_fetch_chunk :: DuckDBResult -> IO (Ptr LDuckDBDataChunk)
+  c_duckdb_fetch_chunk :: DuckDBResult -> IO (Ptr CDuckDBDataChunk)
 
 foreign import ccall "duckdb.h duckdb_stream_fetch_chunk"
-  c_duckdb_stream_fetch_chunk :: DuckDBResult -> IO (Ptr LDuckDBDataChunk)
+  c_duckdb_stream_fetch_chunk :: DuckDBResult -> IO (Ptr CDuckDBDataChunk)
 
 foreign import ccall "duckdb.h duckdb_stream_fetch_chunk_ptr"
-  c_duckdb_stream_fetch_chunk_ptr :: Ptr DuckDBResult -> IO (Ptr LDuckDBDataChunk)
+  c_duckdb_stream_fetch_chunk_ptr :: Ptr DuckDBResult -> IO (Ptr CDuckDBDataChunk)
   
 
 foreign import ccall "duckdb.h duckdb_data_chunk_get_size"
-  c_duckdb_data_chunk_get_size :: Ptr LDuckDBDataChunk -> CInt
+  c_duckdb_data_chunk_get_size :: Ptr CDuckDBDataChunk -> CInt
 
 foreign import ccall "duckdb.h duckdb_data_chunk_get_vector"
-  c_duckdb_data_chunk_get_vector :: Ptr LDuckDBDataChunk -> CInt -> Ptr LDuckDBVector
+  c_duckdb_data_chunk_get_vector :: Ptr CDuckDBDataChunk -> CInt -> Ptr CDuckDBVector
 
 foreign import ccall "duckdb.h duckdb_vector_get_data"
-  c_duckdb_vector_get_data :: Ptr LDuckDBVector -> Ptr ()
+  c_duckdb_vector_get_data :: Ptr CDuckDBVector -> Ptr ()
 
 foreign import ccall "duckdb.h duckdb_vector_get_validity"
-  c_duckdb_vector_get_validity :: Ptr LDuckDBVector -> CIntPtr
+  c_duckdb_vector_get_validity :: Ptr CDuckDBVector -> CIntPtr
 
 foreign import ccall "duckdb.h duckdb_cstring_from_struct_string"
   c_duckdb_cstring_from_struct_string :: Ptr () -> CInt -> CString
@@ -80,10 +80,10 @@ foreign import ccall "duckdb.h duckdb_row_count"
   c_duckdb_row_count :: Ptr DuckDBResult -> CInt
 
 foreign import ccall "duckdb.h duckdb_destroy_data_chunk"
-  c_duckdb_destroy_data_chunk :: (Ptr LDuckDBDataChunk) -> IO ()
+  c_duckdb_destroy_data_chunk :: (Ptr CDuckDBDataChunk) -> IO ()
 
 foreign import ccall "duckdb.h duckdb_data_chunk_get_column_count"
-  c_duckdb_data_chunk_get_column_count :: Ptr LDuckDBDataChunk -> CInt
+  c_duckdb_data_chunk_get_column_count :: Ptr CDuckDBDataChunk -> CInt
 
 foreign import ccall "duckdb.h duckdb_column_type"
   c_duckdb_column_type :: Ptr DuckDBResult -> CInt -> CInt

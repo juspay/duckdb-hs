@@ -16,7 +16,7 @@ import Data.Aeson
 main :: IO ()
 main = do
   print "Testing duckdb ffi"
-  res <- duckdbOpenAndConnect (Nothing) (Nothing :: Maybe [(String, String)])
+  res <- duckdbOpen (Nothing) (Nothing :: Maybe [(String, String)])
   print "Running queries"
   
   -- duckdbQuery res "INSTALL httpfs;"
@@ -35,7 +35,7 @@ main = do
             .| Conduit.map (BS.toStrict)
             .| Conduit.map (<> "\n")
             .| Conduit.stdout
-  duckdbDisconnectAndClose res
+  duckdbClose res
   pure ()
 
 -- (duckdbQueryConduitRes res "SELECT * FROM 's3://bulk-download-row-binary/parquet/juspayonly/rowbinary/txn/2025/01/22/10/000001737541437.parquet';")
