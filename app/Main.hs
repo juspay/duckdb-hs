@@ -19,7 +19,7 @@ main = do
   res <- duckdbOpen (Nothing) (Nothing :: Maybe [(String, String)])
   print "Running queries"
   
-  -- duckdbQuery res "INSTALL httpfs;"
+  -- duckdbQuery res "INVALID SQL STATEMENT;"
   -- duckdbQuery res "LOAD httpfs;"
   -- duckdbQuery res "INSTALL aws;"
   -- duckdbQuery res "LOAD aws;"
@@ -30,7 +30,7 @@ main = do
   -- duckdbQuery res "INSERT INTO INTTf VALUES (3,'hello', '2025-01-06 11:30:00.123456789'), (5,'hii', '1992-09-20 11:30:00.123456789'),(7, NULL, '1992-09-20 11:30:00.123456789');"
   
   runConduit $ do
-            (duckdbQueryWithResponse res "SELECT count(1) as c, payment_method_type FROM 's3://bulk-download-row-binary/parquet/juspayonly/rowbinary/txn/2025/01/*/*/*.parquet' where merchant_id IN ( 'goindigo' ) and payment_instrument_group IN ( 'CREDIT CARD', 'DEBIT CARD', 'NET BANKING', 'WALLET', 'UPI' ) and payment_gateway IN ( 'RAZORPAY', 'CCAVENUE_V2' ) and actual_payment_status IN ( 'AUTHORIZATION_FAILED' ) and  ( payment_method_type IN ( 'CARD', 'UPI', 'NB', 'WALLET' ) ) AND (txn_initiated < 1737542069 ) AND ( txn_initiated >= 1737540069) group by payment_method_type;")
+            (duckdbQueryWithResponse res "SELECT count(1) as c FROM '/Users/rahulsingh/Documents/duckdb-hs/tests/artifacts/test.parquet'")
             .| Conduit.map (encode)
             .| Conduit.map (BS.toStrict)
             .| Conduit.map (<> "\n")

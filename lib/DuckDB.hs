@@ -48,7 +48,7 @@ duckdbOpenInternal mPath = do
   outDatabase <- malloc
   cPath <- maybe (pure nullPtr) newCString mPath
   result <- c_duckdb_open cPath outDatabase
-  when (not (result == 0)) (error "Failed to open DuckDB database.")
+  when (not (result == 0)) (throwIO $ userError "Failed to open DuckDB database.")
   pure outDatabase
 
 duckdbOpenExtInternal :: Maybe String -> DuckDBConfig -> IO (Ptr DuckDBDatabase)
@@ -56,7 +56,7 @@ duckdbOpenExtInternal mPath config = do
   outDatabase <- malloc
   cPath <- maybe (pure nullPtr) newCString mPath
   result <- c_duckdb_open_ext cPath outDatabase config nullPtr
-  when (not (result == 0)) (error "Failed to open DuckDB database.")
+  when (not (result == 0)) (throwIO $ userError "Failed to open DuckDB database.")
   pure outDatabase
 
 getConfigFromHM :: (Traversable t) => t (String, String) -> IO (Ptr DuckDBConfig)
@@ -70,7 +70,7 @@ duckdbConnectInternal :: Ptr CDuckDBDatabase -> IO (Ptr DuckDBConnection)
 duckdbConnectInternal dataBase = do
   outConnection <- malloc
   result <- c_duckdb_connect dataBase outConnection
-  when (not (result == 0)) (error "Failed to Connect to DuckDB database.")
+  when (not (result == 0)) (throwIO $ userError "Failed to Connect to DuckDB database.")
   pure outConnection
 
 duckdbOpen :: (Traversable t) => Maybe String -> Maybe (t (String, String)) -> IO DuckDbCon
@@ -98,13 +98,12 @@ duckdbQuery DuckDbCon{connection} query = do
         err <- c_duckdb_result_error resPtr
         errorString <- peekCString err
         c_duckdb_destroy_result resPtr
-        error errorString)
+        throwIO $ userError errorString)
     c_duckdb_destroy_result resPtr
 
 getRowData :: Ptr CDuckDBDataChunk -> [DuckDBType] -> Int -> [String] -> ConduitT () Object IO ()
 getRowData chunk types numCols cNames = do
   let numRows = fromEnum $ c_duckdb_data_chunk_get_size chunk
-  liftIO $ print numRows
   columnsData <- mapM (\idxCol -> do
     let 
       vector = c_duckdb_data_chunk_get_vector chunk (toEnum idxCol)
@@ -132,8 +131,7 @@ makeResultConduit resultPtr = do
       chunkPtr <- liftIO $ c_duckdb_stream_fetch_chunk_ptr resultPtr
       when (not (chunkPtr == nullPtr)) (do
           getRowData chunkPtr types numCols cNames
-          -- liftIO $ c_duckdb_destroy_data_chunk chunkPtr
-          liftIO  $ print "conduit finish"
+          liftIO $ c_duckdb_destroy_data_chunk chunkPtr
           loopFetch cNames
         )
   colNames <- liftIO $ mapM (\idx -> peekCString $ c_duckdb_column_name resultPtr (toEnum idx)) [0..numCols-1]
@@ -149,17 +147,14 @@ duckdbQueryWithResponse DuckDbCon{connection} query = do
   ps <- liftIO $ peek psPtr
   result <- liftIO $
               c_duckdb_execute_prepared_streaming ps resPtr
-  liftIO  $ print result
   when (not (result == 0)) (do
-        liftIO $ print "In error"
         err <- liftIO $ c_duckdb_result_error resPtr
         errorString <- liftIO $
                         case err == nullPtr of
                           False -> peekCString err
                           _ -> pure "Failed"
-        error errorString
+        liftIO $ throwIO $ userError errorString
         )
-  liftIO $ print "out error"
   makeResultConduit resPtr
   liftIO $ c_duckdb_destroy_result resPtr
 
@@ -184,7 +179,7 @@ duckdbCreateConfig :: IO (Ptr DuckDBConfig)
 duckdbCreateConfig = do
   configPtr <- malloc
   result <- c_duckdb_create_config configPtr
-  when (not (result == 0)) (error "Failed to create config.")
+  when (not (result == 0)) (throwIO $ userError "Failed to create config.")
   pure configPtr
 
 duckdbSetConfig :: DuckDBConfig -> String -> String -> IO ()
@@ -192,7 +187,7 @@ duckdbSetConfig configPtr a b =  do
     key <- newCString a
     value <- newCString b
     result <- c_duckdb_set_config configPtr key value 
-    when (not (result == 0)) (error "Failed to set config.")
+    when (not (result == 0)) (throwIO $ userError "Failed to set config.")
 
 duckdbDestroyConfig :: Ptr DuckDBConfig -> IO ()
 duckdbDestroyConfig  = c_duckdb_destroy_config
