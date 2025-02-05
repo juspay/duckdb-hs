@@ -6,7 +6,6 @@ import Test.Hspec
 import Control.Monad.IO.Class (liftIO)
 import DuckDB
 import qualified Data.Text as T
--- import qualified Data.Vector as V
 import Conduit
 import qualified Data.Conduit.Combinators as C
 import qualified Data.ByteString.Lazy.Char8 as BSL
