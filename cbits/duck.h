@@ -8,6 +8,8 @@ extern "C" {
   DUCKDB_API const char *duckdb_cstring_from_struct_string(void *vectorData, idx_t row);
   DUCKDB_API int64_t duckdb_timestamp_from_struct(void *vectorData, idx_t row);
   DUCKDB_API bool duckdb_get_bool_from_vector(void *vectorData, idx_t row);
+  DUCKDB_API double duckdb_hugeint_to_double_custom(void *vectorData, idx_t row);
+  DUCKDB_API double duckdb_uhugeint_to_double_custom(void *vectorData, idx_t row);
 #ifdef __cplusplus
 }
 #endif

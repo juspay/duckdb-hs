@@ -65,7 +65,7 @@ executable duckdb-hs-runner
         optparse-applicative,
         containers,
         unordered-containers,
-        conduit, conduit-extra, aeson, lens, lens-aeson
+        conduit, conduit-extra, aeson, lens, lens-aeson, time
 
 --    extra-libraries: zstd
 
@@ -84,7 +84,7 @@ library
     exposed-modules: DuckDB    
     other-modules: DuckDB.FFI, DuckDB.Types, DuckDB.Utils
 
-    build-depends:    base, bytestring, ghc-prim, containers, conduit, conduit-extra, aeson, lens, lens-aeson, text
+    build-depends:    base, bytestring, ghc-prim, containers, conduit, conduit-extra, aeson, lens, lens-aeson, text, extra
     hs-source-dirs:   lib
     extra-libraries: duckdb
     cxx-sources:

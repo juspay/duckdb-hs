@@ -64,8 +64,6 @@ foreign import ccall "duckdb.h duckdb_vector_get_data"
 foreign import ccall "duckdb.h duckdb_vector_get_validity"
   c_duckdb_vector_get_validity :: Ptr CDuckDBVector -> CIntPtr
 
-foreign import ccall "duckdb.h duckdb_cstring_from_struct_string"
-  c_duckdb_cstring_from_struct_string :: Ptr () -> CInt -> CString
 
 foreign import ccall "duck.h duckdb_get_bool_from_vector"
   c_duckdb_get_bool_from_vector :: Ptr () -> CInt -> CBool
@@ -138,3 +136,18 @@ foreign import ccall "duckdb.h duckdb_set_config"
 
 foreign import ccall "duckdb.h duckdb_destroy_config"
   c_duckdb_destroy_config :: Ptr DuckDBConfig -> IO ()
+
+-- types cast
+
+foreign import ccall "duckdb.h duckdb_cstring_from_struct_string"
+  c_duckdb_cstring_from_struct_string :: Ptr () -> CInt -> CString
+
+foreign import ccall "duckdb.h duckdb_hugeint_to_double_custom"
+  c_duckdb_hugeint_to_double_custom :: Ptr () -> CInt -> CDouble
+
+foreign import ccall "duckdb.h duckdb_uhugeint_to_double_custom"
+  c_duckdb_uhugeint_to_double_custom :: Ptr () -> CInt -> CDouble
+
+-- duckdb_hugeint_to_double
+
+-- duckdb_uhugeint_to_double

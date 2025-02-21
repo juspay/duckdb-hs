@@ -60,4 +60,6 @@ getMappedValues col idxRow columnsData types = do
     DuckDouble -> toJSON <$> peekElemOff (castPtr (fst (columnsData !! col)) :: Ptr Double) (idxRow)
     Varchar -> toJSON <$> peekCString (c_duckdb_cstring_from_struct_string (fst (columnsData !! col)) (toEnum idxRow))
     Timestamp -> pure $ toJSON $ fromEnum (c_duckdb_timestamp_from_struct (fst (columnsData !! col)) (toEnum idxRow))
+    HugeInt -> pure $ toJSON $ fromEnum (c_duckdb_hugeint_to_double_custom (fst (columnsData !! col)) (toEnum idxRow))
+    UHugeInt -> pure $ toJSON $ fromEnum (c_duckdb_uhugeint_to_double_custom (fst (columnsData !! col)) (toEnum idxRow))
     _ -> pure $ toJSON Null

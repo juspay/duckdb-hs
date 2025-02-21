@@ -45,3 +45,15 @@ int64_t duckdb_timestamp_from_struct(void *vectorData, idx_t row) {
     return t.micros;
 }
 
+
+double duckdb_hugeint_to_double_custom(void *vectorData, idx_t row) {
+    duckdb_hugeint *vector_data = (duckdb_hugeint *) vectorData;
+    duckdb_hugeint str = vector_data[row];
+    return duckdb_hugeint_to_double(str);
+}
+
+double duckdb_uhugeint_to_double_custom(void *vectorData, idx_t row) {
+    duckdb_uhugeint *vector_data = (duckdb_uhugeint *) vectorData;
+    duckdb_uhugeint str = vector_data[row];
+    return duckdb_uhugeint_to_double(str);
+}

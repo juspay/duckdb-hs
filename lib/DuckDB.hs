@@ -152,7 +152,7 @@ duckdbQueryWithResponse DuckDbCon{connection} query = do
         errorString <- liftIO $
                         case err == nullPtr of
                           False -> peekCString err
-                          _ -> pure "Failed"
+                          _ -> pure "Invalid Query"
         liftIO $ throwIO $ userError errorString
         )
   makeResultConduit resPtr
