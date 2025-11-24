@@ -52,10 +52,12 @@ getMappedValues col idxRow columnsData types = do
     SmallInt -> toJSON <$> peekElemOff (castPtr (fst (columnsData !! col)) :: Ptr Int16) (idxRow)
     DuckInteger -> toJSON <$> peekElemOff (castPtr (fst (columnsData !! col)) :: Ptr Int32) idxRow
     BigInt -> toJSON <$> peekElemOff (castPtr (fst (columnsData !! col)) :: Ptr Int64) (idxRow)
+    HugeInt -> toJSON <$> peekElemOff (castPtr (fst (columnsData !! col)) :: Ptr Int64) (idxRow)
     UTinyInt -> toJSON <$> peekElemOff (castPtr (fst (columnsData !! col)) :: Ptr Word8) (idxRow)
     USmallInt -> toJSON <$> peekElemOff (castPtr (fst (columnsData !! col)) :: Ptr Word16) (idxRow)
     UInteger -> toJSON <$> peekElemOff (castPtr (fst (columnsData !! col)) :: Ptr Word32) (idxRow)
     UBigInt -> toJSON <$> peekElemOff (castPtr (fst (columnsData !! col)) :: Ptr Word64) (idxRow)
+    UHugeInt -> toJSON <$> peekElemOff (castPtr (fst (columnsData !! col)) :: Ptr Word64) (idxRow)
     Float -> toJSON <$> peekElemOff (castPtr (fst (columnsData !! col)) :: Ptr Float) (idxRow)
     DuckDouble -> toJSON <$> peekElemOff (castPtr (fst (columnsData !! col)) :: Ptr Double) (idxRow)
     Varchar -> toJSON <$> peekCString (c_duckdb_cstring_from_struct_string (fst (columnsData !! col)) (toEnum idxRow))
