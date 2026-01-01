@@ -2,6 +2,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeApplications #-}
 
 module DuckDB (duckdbOpen, duckdbConfigureAWS, duckdbQueryWithResponse, duckdbQuery, duckdbClose)
 where
@@ -42,6 +43,7 @@ import Data.Word
 import Control.Monad
 import DuckDB.Types
 import DuckDB.Utils
+import System.IO
 
 duckdbOpenInternal :: Maybe String -> IO (Ptr DuckDBDatabase)
 duckdbOpenInternal mPath = do
@@ -95,7 +97,8 @@ duckdbQuery DuckDbCon{connection} query = do
     con <- peek connection
     result <- c_duckdb_query con cquery resPtr
     when (not (result == 0)) (do
-        errorString <- peekCString $ c_duckdb_result_error resPtr
+        errorResPtr <- c_duckdb_result_error resPtr
+        errorString <- peekCString errorResPtr
         c_duckdb_destroy_result resPtr
         error errorString)
     c_duckdb_destroy_result resPtr
@@ -140,8 +143,8 @@ makeResultConduit resultPtr = do
 
 duckdbQueryWithResponse :: DuckDbCon -> String -> ConduitT () Object IO ()
 duckdbQueryWithResponse DuckDbCon{connection} query = do
-  resPtr <- liftIO $ malloc
-  psPtr <- liftIO $ malloc
+  resPtr <- liftIO $ malloc @DuckDBResult
+  psPtr <- liftIO $ malloc @DuckDBPreparedStatement
   liftIO $ withCString
     query $ (\cquery -> do
     con <- liftIO $ peek connection
@@ -151,9 +154,13 @@ duckdbQueryWithResponse DuckDbCon{connection} query = do
   result <- liftIO $
               c_duckdb_execute_prepared_streaming ps resPtr
   if (not (result == 0)) then (do
-        errorString <- liftIO $ peekCString $ c_duckdb_result_error resPtr
-        -- liftIO $ c_duckdb_destroy_result resPtr
-        error errorString)
+       --  errPtr <- liftIO $ malloc
+       --  errorResPtr <- liftIO $ c_duckdb_result_error errPtr
+       --  errorString <- liftIO $ peekCString $ errorResPtr
+       --  liftIO $ hPutStrLn stderr "6a"
+       --  liftIO $ c_duckdb_destroy_result resPtr
+       --  error $ "error result != 0" ++ errorString)
+       yield (DAKM.fromList [("Response", "Invalid Query, please review your query")]))
   else do
     makeResultConduit resPtr
     -- liftIO $ c_duckdb_destroy_result resPtr
