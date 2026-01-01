@@ -97,8 +97,7 @@ duckdbQuery DuckDbCon{connection} query = do
     con <- peek connection
     result <- c_duckdb_query con cquery resPtr
     when (not (result == 0)) (do
-        errorResPtr <- c_duckdb_result_error resPtr
-        errorString <- peekCString errorResPtr
+        errorString <- peekCString $ c_duckdb_result_error resPtr
         c_duckdb_destroy_result resPtr
         error errorString)
     c_duckdb_destroy_result resPtr
